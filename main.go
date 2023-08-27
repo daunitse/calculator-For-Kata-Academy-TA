@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -18,13 +20,17 @@ func main() {
 	}
 
 	if strings.ContainsAny(input, "+-*/") == false {
-		fmt.Println("Ошибка: введена неправильная строка")
+		fmt.Println("Вывод ошибки, так как строка не является математической операцией.")
 		return
 	}
 
 	numbers, operation := splitIntoTwoNumbersAndOperation(input)
 	if operation == "" {
-		fmt.Println("Ошибка: введена неправильная строка")
+		fmt.Println("Вывод ошибки, так как строка не является математической операцией.")
+		return
+	}
+	if len(numbers) > 2 {
+		fmt.Println("Вывод ошибки, так как формат математической операции не удовлетворяет заданию — два операнда и один оператор (+, -, /, *).")
 		return
 	}
 
@@ -32,7 +38,7 @@ func main() {
 	b, isRoman2 := parseNum(numbers[1])
 
 	if isRoman1 != isRoman2 {
-		fmt.Println("Ошибка: введены числа разных типов")
+		fmt.Println("Вывод ошибки, так как используются одновременно разные системы счисления.")
 		return
 	}
 
@@ -52,7 +58,7 @@ func main() {
 	// Выводим результат
 	if isRoman1 {
 		if result <= 0 {
-			fmt.Println("Ошибка: результат меньше единицы")
+			fmt.Println("Вывод ошибки, так как в римской системе нет отрицательных чисел.")
 			return
 		}
 		fmt.Println(toRoman(result))
@@ -80,26 +86,38 @@ func parseNum(numStr string) (int, bool) {
 		return num, true
 
 	}
+	num, err := strconv.Atoi(numStr)
+	if err != nil {
+		log.Printf("Не смог конвертировать стринг %s в инт, err: %s", numStr, err)
+		return 1, false
+	}
 
-	return 0, false
+	return num, false
 
 }
 
 func toRoman(num int) string {
 	romanMap := map[int]string{
-		100: "C",
-		90:  "XC",
-		50:  "L",
-		40:  "XL",
-		10:  "X",
-		9:   "IX",
-		5:   "V",
-		4:   "IV",
 		1:   "I",
+		4:   "IV",
+		5:   "V",
+		9:   "IX",
+		10:  "X",
+		40:  "XL",
+		50:  "L",
+		90:  "XC",
+		100: "C",
 	}
 
+	var keys []int
+	for k := range romanMap {
+		keys = append(keys, k)
+	}
+	sort.Sort(sort.Reverse(sort.IntSlice(keys)))
+
 	result := ""
-	for value, symbol := range romanMap {
+	for _, value := range keys {
+		symbol := romanMap[value]
 		for num >= value {
 			result += symbol
 			num -= value
